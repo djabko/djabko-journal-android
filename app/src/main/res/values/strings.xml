@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">djabko-journal</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">Entries</string>
+    <string name="second_fragment_label">Journal Selection</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="create_journal">Add</string>
+
+    <string name="lorem_ipsum">Logs:\n</string>
+    <string name="fab_desc">Add</string>
+</resources>
