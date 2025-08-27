@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import com.example.djabko_journal.databinding.EntriesFragmentBinding;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class EntriesFragment extends Fragment {
@@ -43,10 +44,17 @@ public class EntriesFragment extends Fragment {
                         for (int i = 0; i < items.length(); i++) {
                             JSONObject item = items.getJSONObject(i);
                             Message m = new Message(item);
+
+                            try {
+                                m.message = MainActivity.jcipher.decrypt(m.message);
+                            } catch (Exception e) {
+                                m.message = "<" + e.toString() + "> " + m.message;
+                            }
+
                             addLog(view, m);
                         }
 
-                    } catch (Exception e) {
+                    } catch (JSONException e) {
                         logView.append("Error: " + e + "\n\n");
                     }
                 },

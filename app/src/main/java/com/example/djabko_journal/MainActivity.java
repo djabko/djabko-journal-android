@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREF_KEY_NOTEBOOKS = "Keys";
     private static String notebookKey = null;
     public static Set<String> notebookKeys;
+    public static JournalCipher jcipher;
 
     public static EntriesFragment entriesFragment;
     private AppBarConfiguration appBarConfiguration;
@@ -201,6 +202,12 @@ public class MainActivity extends AppCompatActivity {
         assert drawerLayout != null;
 
         singleton = this;
+
+        try {
+            jcipher = new JournalCipher();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         injectFragment(R.id.left_drawer, new JournalsFragment());
         loadNotebooksPref();

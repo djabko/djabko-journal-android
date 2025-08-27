@@ -61,7 +61,7 @@ public class DjabkoJournal {
 
         try {
             body.put("notebook", MainActivity.getNotebookKey());
-            body.put("message", message.message);
+            body.put("message", MainActivity.jcipher.encrypt(message.message));
 
             if (message.author != null) body.put("author", message.author);
             if (message.tag1 != null) body.put("tag1", message.tag1);
@@ -69,7 +69,7 @@ public class DjabkoJournal {
             if (message.tag3 != null) body.put("tag3", message.tag3);
             if (message.tag4 != null) body.put("tag4", message.tag4);
 
-        } catch (JSONException e) {
+        } catch (Exception e) {
             display(view, "Error: " + e);
         }
 
