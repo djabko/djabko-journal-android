@@ -10,4 +10,5 @@
 
     <string name="lorem_ipsum">Logs:\n</string>
     <string name="fab_desc">Add</string>
+    <string name="action_secret_key">Secret Key</string>
 </resources>

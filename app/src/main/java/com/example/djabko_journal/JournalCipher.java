@@ -1,16 +1,14 @@
 package com.example.djabko_journal;
 
 import android.util.Base64;
-import android.util.Log;
 
 import java.security.SecureRandom;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class JournalCipher {
 
@@ -47,6 +45,15 @@ public class JournalCipher {
         this.key = key;
 
         initCipher();
+    }
+
+    public void setKey(SecretKey key) {
+        this.key = key;
+    }
+
+    public void setKey(String base64Key) throws IllegalArgumentException {
+        byte[] key = Base64.decode(base64Key, Base64.NO_WRAP);
+        this.key = new SecretKeySpec(key, "AES");
     }
 
     public SecretKey getKey() {
@@ -91,9 +98,6 @@ public class JournalCipher {
         String nonce = bytesToHex(iv);
         String ciphertext = Base64.encodeToString(cipherbytes, Base64.NO_WRAP);
 
-        Log.println(Log.ASSERT, "EDJ", "Nonce: '" + nonce + "'");
-        Log.println(Log.ASSERT, "EDJ", "Cipher: '" + ciphertext + "'");
-
         return nonce + ":" + ciphertext;
     }
 
@@ -105,9 +109,6 @@ public class JournalCipher {
 
         byte[] iv = hexToBytes(nonce);
         byte[] cipherbytes = Base64.decode(ciphertext, Base64.NO_WRAP);
-
-        Log.println(Log.ASSERT, "DDJ", "Nonce: '" + nonce + "'");
-        Log.println(Log.ASSERT, "DDJ", "Cipher: '" + ciphertext + "'");
 
         decipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
 

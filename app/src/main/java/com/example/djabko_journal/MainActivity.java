@@ -1,8 +1,7 @@
 package com.example.djabko_journal;
 
-import android.app.Dialog;
+import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -11,8 +10,10 @@ import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
+import android.util.Base64;
 
 import androidx.core.view.GravityCompat;
 import androidx.fragment.app.Fragment;
@@ -29,9 +30,9 @@ import com.example.djabko_journal.databinding.ActivityMainBinding;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import org.json.JSONException;
 
@@ -64,14 +65,14 @@ public class MainActivity extends AppCompatActivity {
                 message,
                 (json) -> {
                     try {
-                        addLog(new Message(json));
+                        Message response = new Message(json);
+                        response.message = message.message; // Server will send ciphertext
+                        addLog(response);
                     } catch (JSONException e) {
                         Snackbar.make(view, e.toString(), Snackbar.LENGTH_SHORT).show();
                     }
                 },
-                (e) -> {
-                    Snackbar.make(view, e.toString(), Snackbar.LENGTH_SHORT).show();
-                }
+                (e) -> Snackbar.make(view, e.toString(), Snackbar.LENGTH_SHORT).show()
         );
     }
 
@@ -150,9 +151,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadNotebooksPref() {
         SharedPreferences sharedPreferences = getSharedPreferences(PREF_NAME_NOTEBOOKS, Context.MODE_PRIVATE);
-        Set<String> ss = sharedPreferences.getStringSet(PREF_KEY_NOTEBOOKS, new HashSet<String>());
+        Set<String> ss = sharedPreferences.getStringSet(PREF_KEY_NOTEBOOKS, new HashSet<>());
 
-        notebookKeys = new HashSet<String>(ss);
+        notebookKeys = new HashSet<>(ss);
     }
 
     private void flushNotebooksPref() {
@@ -224,6 +225,39 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        menu.findItem(R.id.action_secret_key).setOnMenuItemClickListener(item -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Enter secret symmetric key.");
+
+            final EditText input = new EditText(this);
+
+            input.setInputType(InputType.TYPE_CLASS_TEXT);
+            input.setText(Base64.encodeToString(jcipher.getKey().getEncoded(), Base64.NO_WRAP));
+            builder.setView(input);
+            builder.setPositiveButton("Set", null);
+
+            AlertDialog dialog = builder.create();
+            dialog.setOnShowListener(d -> {
+                Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                button.setOnClickListener(v -> {
+                    String key = input.getText().toString();
+
+                    try {
+                        jcipher.setKey(key);
+                        dialog.dismiss();
+                        reloadLogs();
+                    } catch (IllegalArgumentException e) {
+                        input.setText("The key you have entered is invalid...");
+                    }
+                });
+            });
+
+            dialog.show();
+
+            return true;
+        });
+
         return true;
     }
 
