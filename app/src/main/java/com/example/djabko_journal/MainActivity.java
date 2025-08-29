@@ -246,7 +246,6 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         jcipher.setKey(key);
                         dialog.dismiss();
-                        reloadLogs();
                     } catch (IllegalArgumentException e) {
                         input.setText("The key you have entered is invalid...");
                     }

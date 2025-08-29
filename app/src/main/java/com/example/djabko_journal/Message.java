@@ -53,7 +53,7 @@ public class Message {
     }
 
     @NonNull
-    public LinearLayout toLinearLayout(Context ctx) {
+    public LinearLayout toLinearLayout(Context ctx, boolean isSelectable) {
         TextView datetime = new TextView(ctx);
         TextView message = new TextView(ctx);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
@@ -62,9 +62,11 @@ public class Message {
         datetime.setLayoutParams(params);
         datetime.setGravity(Gravity.START);
         datetime.setPadding(0,0,0,16);
+        datetime.setTextIsSelectable(isSelectable);
         message.setText(this.message);
         message.setLayoutParams(params);
         message.setGravity(Gravity.START);
+        message.setTextIsSelectable(isSelectable);
 
         LinearLayout entry = new LinearLayout(ctx);
 
@@ -74,5 +76,9 @@ public class Message {
         entry.addView(message);
 
         return entry;
+    }
+
+    public LinearLayout toLinearLayout(Context ctx) {
+        return toLinearLayout(ctx, false);
     }
 }

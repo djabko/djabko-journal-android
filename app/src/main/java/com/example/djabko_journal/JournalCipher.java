@@ -2,6 +2,8 @@ package com.example.djabko_journal;
 
 import android.util.Base64;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.SecureRandom;
 
 import javax.crypto.Cipher;

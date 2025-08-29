@@ -16,13 +16,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.crypto.BadPaddingException;
+
 public class EntriesFragment extends Fragment {
 
     private EntriesFragmentBinding binding;
 
     public static void addLog(View view, Message m) {
         LinearLayout parent = view.findViewById(R.id.entries_layout);
-        parent.addView(m.toLinearLayout(view.getContext()));
+        parent.addView(m.toLinearLayout(view.getContext(), true));
     }
 
     protected void loadLogs(View view) {
@@ -45,16 +47,11 @@ public class EntriesFragment extends Fragment {
                             JSONObject item = items.getJSONObject(i);
                             Message m = new Message(item);
 
-                            try {
-                                m.message = MainActivity.jcipher.decrypt(m.message);
-                            } catch (Exception e) {
-                                m.message = "<" + e.toString() + "> " + m.message;
-                            }
-
+                            m.message = MainActivity.jcipher.decrypt(m.message);
                             addLog(view, m);
                         }
 
-                    } catch (JSONException e) {
+                    } catch (Exception e) {
                         logView.append("Error: " + e + "\n\n");
                     }
                 },
