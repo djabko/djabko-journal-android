@@ -11,6 +11,7 @@ import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.text.InputType;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.util.Base64;
@@ -36,6 +37,7 @@ import android.widget.LinearLayout;
 
 import org.json.JSONException;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,9 +46,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String PREF_NAME_NOTEBOOKS = "Notebooks";
     private static final String PREF_KEY_NOTEBOOKS = "Keys";
-    private static String notebookKey = null;
+    private static Journal journalSelected;
     public static Set<String> notebookKeys;
-    public static JournalCipher jcipher;
+    public static HashMap<String, Journal> journals = new HashMap<String, Journal>();
 
     public static EntriesFragment entriesFragment;
     private AppBarConfiguration appBarConfiguration;
@@ -70,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
                         addLog(response);
                     } catch (JSONException e) {
                         Snackbar.make(view, e.toString(), Snackbar.LENGTH_SHORT).show();
+                        Log.println(Log.ERROR, this.getClass().toString(), Log.getStackTraceString(e));
                     }
                 },
                 (e) -> Snackbar.make(view, e.toString(), Snackbar.LENGTH_SHORT).show()
@@ -88,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void readMessage(View view) {
-        if (MainActivity.getNotebookKey() == null) {
+        if (MainActivity.getNotebook() == null) {
             Snackbar.make(view, "No journal selected...", Snackbar.LENGTH_SHORT).show();
             return;
         }
@@ -163,26 +166,32 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    public static String getNotebookKey() {
-        return notebookKey;
+    public static Journal getNotebook() {
+        return journalSelected;
     }
 
-    public static void setNotebookKey(String key) {
-        notebookKey = key;
+    public static void setNotebook(Journal journal) {
+        journals.put(journal.name, journal);
 
-        if (!notebookKeys.contains(key)) {
-            notebookKeys.add(key);
+        if (!notebookKeys.contains(journal.name)) {
+            notebookKeys.add(journal.name);
             singleton.flushNotebooksPref();
         }
+
+        Log.println(Log.INFO, "MainActivity", "Set notebook to '" + journal.name + "'!!!");
+
+        journalSelected = journal;
 
         reloadLogs();
     }
 
-    public static boolean removeNotebookKey(String key) {
-        if (!notebookKeys.contains(key)) return false;
+    public static boolean removeNotebook(Journal journal) {
+        journals.remove(journal.name);
+        if (journal == null || !journals.containsKey(journal.name)) return false;
 
-        notebookKeys.remove(key);
+        notebookKeys.remove(journal.name);
         singleton.flushNotebooksPref();
+
         return true;
     }
 
@@ -204,12 +213,6 @@ public class MainActivity extends AppCompatActivity {
 
         singleton = this;
 
-        try {
-            jcipher = new JournalCipher();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
         injectFragment(R.id.left_drawer, new JournalsFragment());
         loadNotebooksPref();
 
@@ -230,6 +233,7 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Enter secret symmetric key.");
 
+            JournalCipher jcipher = journalSelected.jcipher;
             final EditText input = new EditText(this);
 
             input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -248,6 +252,7 @@ public class MainActivity extends AppCompatActivity {
                         dialog.dismiss();
                     } catch (IllegalArgumentException e) {
                         input.setText("The key you have entered is invalid...");
+                        Log.println(Log.ERROR, this.getClass().toString(), Log.getStackTraceString(e));
                     }
                 });
             });

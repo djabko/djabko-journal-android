@@ -1,9 +1,12 @@
 package com.example.djabko_journal;
 
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyStore;
 import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
@@ -18,14 +21,15 @@ public class JournalCipher {
     private Cipher decipher;
     private SecureRandom random;
     private SecretKey key;
-    private static boolean initialized = false;
+    private boolean initialized = false;
+    private static final String ANDROID_KEYSTORE = "AndroidKeyStore";
 
     private static final int AES_KEY_SIZE = 256;
     private static final int IV_SIZE = 12;
     private static final int GCM_TAG_LENGTH = 128;
 
     private void initCipher() throws Exception {
-        if (initialized) throw new Exception("Double Cipher initialization...");
+        if (initialized) return;
 
         cipher = Cipher.getInstance("AES/GCM/NoPadding");
         decipher = Cipher.getInstance("AES/GCM/NoPadding");
@@ -34,19 +38,32 @@ public class JournalCipher {
         initialized = true;
     }
 
-    public JournalCipher() throws Exception {
-        KeyGenerator keygen = KeyGenerator.getInstance("AES");
-
-        keygen.init(AES_KEY_SIZE);
-        this.key = keygen.generateKey();
-
+    public JournalCipher(String keyAlias, SecretKey key) throws Exception {
         initCipher();
-    }
 
-    public JournalCipher(SecretKey key) throws Exception {
+        KeyStore ks = KeyStore.getInstance(ANDROID_KEYSTORE);
+        ks.load(null);
+
+        if (key != null);
+
+        else if (ks.containsAlias(keyAlias)) {
+            key = (SecretKey) ks.getKey(keyAlias, null);
+
+        } else {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keyAlias,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setKeySize(AES_KEY_SIZE)
+                    //.setRandomizedEncryptionRequired(false)
+                    .build();
+
+            KeyGenerator keygen = KeyGenerator.getInstance("AES", ANDROID_KEYSTORE);
+            keygen.init(spec);
+            key = keygen.generateKey();
+        }
+
         this.key = key;
-
-        initCipher();
     }
 
     public void setKey(SecretKey key) {
@@ -91,10 +108,15 @@ public class JournalCipher {
     String encrypt(String plaintext) throws Exception {
         if (!initialized) throw new Exception("Cipher not initialized...");
 
+        /*
         byte[] iv = new byte[IV_SIZE];
         random.nextBytes(iv);
+         */
 
-        cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+
+        byte[] iv = cipher.getIV();
+        if (iv == null) throw new Exception("IV is null.");
 
         byte[] cipherbytes = cipher.doFinal(plaintext.getBytes());
         String nonce = bytesToHex(iv);

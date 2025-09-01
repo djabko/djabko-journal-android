@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.style.BackgroundColorSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -24,6 +25,8 @@ import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONException;
 
+import java.util.HashSet;
+
 public class JournalsFragment extends Fragment {
 
     private FragmentSecondBinding binding;
@@ -40,12 +43,13 @@ public class JournalsFragment extends Fragment {
                 .setPositiveButton("Submit", (dialog, which) -> {
                     String text = input.getText().toString();
                     if (!text.trim().isEmpty()) {
-                        MainActivity.setNotebookKey(text);
-                        MainActivity.reloadLogs();
-
                         View parent = (View) view.getParent();
                         LinearLayout layout = parent.findViewById(R.id.journals_list);
-                        insertJournal(context, layout, text);
+                        if (!insertJournal(context, layout, text)) Log.println(Log.ERROR, "JournalsFragment", "Couldn't insert Journal...");
+                        MainActivity.setNotebook(new Journal(text));
+                        Log.println(Log.INFO, "JournalsFragment", "Journal selected: " + MainActivity.getNotebook().name);
+
+                        MainActivity.reloadLogs();
                     } else {
                         Snackbar.make(view, "Entry cannot be empty", Snackbar.LENGTH_SHORT).show();
                     }
@@ -65,8 +69,8 @@ public class JournalsFragment extends Fragment {
 
     }
 
-    private void insertJournal(Context ctx, LinearLayout layout, String key) {
-        if (ctx == null || layout == null) return;
+    private boolean insertJournal(Context ctx, LinearLayout layout, String key) {
+        if (ctx == null || layout == null) return false;
 
         TextView tv = new TextView(ctx);
 
@@ -74,18 +78,20 @@ public class JournalsFragment extends Fragment {
         tv.setText(key);
         tv.setPadding(32,32,0,0);
         tv.setOnClickListener((v) -> {
-            MainActivity.setNotebookKey(key);
+            MainActivity.setNotebook(new Journal(key));
         });
         tv.setOnLongClickListener((v) -> removeJournal(v, key));
 
         layout.addView(tv);
+
+        return true;
     }
 
     private boolean removeJournal(View view, String key) {
         ViewGroup parent = (ViewGroup) view.getParent();
-        if (parent == null) return false;
+        if (parent == null || key == null) return false;
 
-        MainActivity.removeNotebookKey(key);
+        MainActivity.removeNotebook(MainActivity.journals.get(key));
         parent.removeView(view);
         return true;
     }

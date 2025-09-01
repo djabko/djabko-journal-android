@@ -1,6 +1,7 @@
 package com.example.djabko_journal;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 
 import com.android.volley.Request;
@@ -34,9 +35,6 @@ public class DjabkoJournal {
     }
 
     public static void create(View view) {
-
-        display(view, "Sending POST request to djabko.com...");
-
         initialize(view);
 
         StringRequest request = new StringRequest(
@@ -60,8 +58,8 @@ public class DjabkoJournal {
         JSONObject body = new JSONObject();
 
         try {
-            body.put("notebook", MainActivity.getNotebookKey());
-            body.put("message", MainActivity.jcipher.encrypt(message.message));
+            body.put("notebook", MainActivity.getNotebook().name);
+            body.put("message", MainActivity.getNotebook().jcipher.encrypt(message.message));
 
             if (message.author != null) body.put("author", message.author);
             if (message.tag1 != null) body.put("tag1", message.tag1);
@@ -71,6 +69,7 @@ public class DjabkoJournal {
 
         } catch (Exception e) {
             display(view, "Error: " + e);
+            Log.println(Log.ERROR, "DjabkoJournal", Log.getStackTraceString(e));
         }
 
         JsonObjectRequest request = new JsonObjectRequest(
@@ -110,9 +109,10 @@ public class DjabkoJournal {
         JSONObject body = new JSONObject();
 
         try {
-            body.put("notebook", MainActivity.getNotebookKey());
+            body.put("notebook", MainActivity.getNotebook().name);
         } catch (JSONException e) {
             display(view, "Error: " + e.toString());
+            Log.println(Log.ERROR, "DjabkoJournal", Log.getStackTraceString(e));
             return false;
         }
 

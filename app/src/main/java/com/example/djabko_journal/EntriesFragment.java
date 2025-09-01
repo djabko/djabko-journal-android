@@ -1,6 +1,7 @@
 package com.example.djabko_journal;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,7 +29,7 @@ public class EntriesFragment extends Fragment {
     }
 
     protected void loadLogs(View view) {
-        if (MainActivity.getNotebookKey() == null) return;
+        if (MainActivity.getNotebook() == null) return;
 
         LinearLayout parent = view.findViewById(R.id.entries_layout);
         parent.removeAllViews();
@@ -42,17 +43,19 @@ public class EntriesFragment extends Fragment {
                 json -> {
                     try {
                         JSONArray items = json.getJSONArray("items");
+                        Log.println(Log.INFO, "EntriesFragment", "Got " + items.length() + " items!");
 
                         for (int i = 0; i < items.length(); i++) {
                             JSONObject item = items.getJSONObject(i);
                             Message m = new Message(item);
 
-                            m.message = MainActivity.jcipher.decrypt(m.message);
+                            m.message = MainActivity.getNotebook().jcipher.decrypt(m.message);
                             addLog(view, m);
                         }
 
                     } catch (Exception e) {
                         logView.append("Error: " + e + "\n\n");
+                        Log.println(Log.ERROR, this.getClass().toString(), Log.getStackTraceString(e));
                     }
                 },
                 verror -> logView.append("FAILED " + verror.toString() + "\n"));
