@@ -3,10 +3,12 @@ package com.example.djabko_journal;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
+import android.util.Log;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
@@ -21,6 +23,8 @@ public class JournalCipher {
     private Cipher decipher;
     private SecureRandom random;
     private SecretKey key;
+    private KeyStore keystore;
+    private String alias;
     private boolean initialized = false;
     private static final String ANDROID_KEYSTORE = "AndroidKeyStore";
 
@@ -33,6 +37,7 @@ public class JournalCipher {
 
         cipher = Cipher.getInstance("AES/GCM/NoPadding");
         decipher = Cipher.getInstance("AES/GCM/NoPadding");
+        keystore = KeyStore.getInstance(ANDROID_KEYSTORE);
         random = new SecureRandom();
 
         initialized = true;
@@ -41,13 +46,13 @@ public class JournalCipher {
     public JournalCipher(String keyAlias, SecretKey key) throws Exception {
         initCipher();
 
-        KeyStore ks = KeyStore.getInstance(ANDROID_KEYSTORE);
-        ks.load(null);
+
+        keystore.load(null);
 
         if (key != null);
 
-        else if (ks.containsAlias(keyAlias)) {
-            key = (SecretKey) ks.getKey(keyAlias, null);
+        else if (keystore.containsAlias(keyAlias)) {
+            key = (SecretKey) keystore.getKey(keyAlias, null);
 
         } else {
             KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keyAlias,
@@ -61,6 +66,7 @@ public class JournalCipher {
             KeyGenerator keygen = KeyGenerator.getInstance("AES", ANDROID_KEYSTORE);
             keygen.init(spec);
             key = keygen.generateKey();
+            alias = keyAlias;
         }
 
         this.key = key;
@@ -70,9 +76,23 @@ public class JournalCipher {
         this.key = key;
     }
 
-    public void setKey(String base64Key) throws IllegalArgumentException {
-        byte[] key = Base64.decode(base64Key, Base64.NO_WRAP);
-        this.key = new SecretKeySpec(key, "AES");
+    public JournalCipherError setKey(String base64Key){
+
+        try {
+            byte[] key = Base64.decode(base64Key, Base64.NO_WRAP);
+            this.key = new SecretKeySpec(key, "AES");
+            keystore.setKeyEntry(alias, key, null);
+
+        } catch (KeyStoreException e) {
+            Log.println(Log.ERROR, this.getClass().toString(), Log.getStackTraceString(e));
+            return JournalCipherError.KEYSTORE_EXCEPTION;
+
+        } catch (IllegalArgumentException e) {
+            Log.println(Log.ERROR, this.getClass().toString(), Log.getStackTraceString(e));
+            return JournalCipherError.BASE64_DECODING_ERROR;
+        }
+
+        return JournalCipherError.OK;
     }
 
     public SecretKey getKey() {

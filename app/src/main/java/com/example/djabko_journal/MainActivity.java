@@ -34,13 +34,17 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import org.json.JSONException;
 
+import java.security.KeyStoreException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.crypto.SecretKey;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -231,31 +235,50 @@ public class MainActivity extends AppCompatActivity {
 
         menu.findItem(R.id.action_secret_key).setOnMenuItemClickListener(item -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Enter secret symmetric key.");
 
-            JournalCipher jcipher = journalSelected.jcipher;
-            final EditText input = new EditText(this);
+            AlertDialog dialog;
 
-            input.setInputType(InputType.TYPE_CLASS_TEXT);
-            input.setText(Base64.encodeToString(jcipher.getKey().getEncoded(), Base64.NO_WRAP));
-            builder.setView(input);
-            builder.setPositiveButton("Set", null);
+            if (journalSelected == null) {
+                builder.setTitle("No journal selected...");
+                builder.setPositiveButton("Cancel", null);
+                dialog = builder.create();
 
-            AlertDialog dialog = builder.create();
-            dialog.setOnShowListener(d -> {
-                Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                button.setOnClickListener(v -> {
-                    String key = input.getText().toString();
+            } else {
+                builder.setTitle("Enter secret symmetric key.");
+                JournalCipher jcipher = journalSelected.jcipher;
+                final EditText input = new EditText(this);
 
-                    try {
-                        jcipher.setKey(key);
-                        dialog.dismiss();
-                    } catch (IllegalArgumentException e) {
-                        input.setText("The key you have entered is invalid...");
-                        Log.println(Log.ERROR, this.getClass().toString(), Log.getStackTraceString(e));
-                    }
+                byte[] key = jcipher.getKey().getEncoded();
+                String text = (key == null) ? "" : Base64.encodeToString(key, Base64.NO_WRAP);
+
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                input.setText(text);
+                builder.setView(input);
+                builder.setPositiveButton("Set", null);
+
+                dialog = builder.create();
+                dialog.setOnShowListener(d -> {
+                    Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                    button.setOnClickListener(v -> {
+                        String s_key = input.getText().toString();
+
+                        JournalCipherError result = jcipher.setKey(s_key);
+
+                        if (result == JournalCipherError.OK)
+                            dialog.dismiss();
+
+                        else if (result == JournalCipherError.BASE64_DECODING_ERROR)
+                            input.setText("Invalid base64 string...");
+
+                        else if (result == JournalCipherError.KEYSTORE_EXCEPTION) {
+                            input.setText("Keystore rejected key persistence, however it may still be used for decryption.");
+                            reloadLogs();
+
+                        } else
+                            input.setText("Unexpected error...");
+                    });
                 });
-            });
+            }
 
             dialog.show();
 
