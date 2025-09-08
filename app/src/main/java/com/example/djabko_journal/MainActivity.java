@@ -1,7 +1,9 @@
 package com.example.djabko_journal;
 
 import android.app.AlertDialog;
+import android.app.Notification;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -16,6 +18,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.util.Base64;
 
+import androidx.core.util.Consumer;
 import androidx.core.view.GravityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -37,6 +40,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.security.KeyStoreException;
 import java.util.HashMap;
@@ -94,12 +98,7 @@ public class MainActivity extends AppCompatActivity {
         return view;
     }
 
-    private void readMessage(View view) {
-        if (MainActivity.getNotebook() == null) {
-            Snackbar.make(view, "No journal selected...", Snackbar.LENGTH_SHORT).show();
-            return;
-        }
-
+    private void promptUserBuildMessageObject(View view, Consumer<Message> posCallback, Runnable negCallback) {
         Context context = view.getContext();
 
         int ems = 5;
@@ -117,21 +116,51 @@ public class MainActivity extends AppCompatActivity {
         final EditText tag4 = buildEditTextView(context, layout, "Tag 4", ems, params);
 
         new MaterialAlertDialogBuilder(context)
-            .setTitle("New Journal Entry")
-            .setView(layout)
-            .setPositiveButton("Submit", (dialogInterface, which) -> {
-                Message m = new Message();
-                m.message = message.getText().toString().trim();
-                m.author = author.getText().toString().trim();
-                m.tag1 = tag1.getText().toString().trim();
-                m.tag2 = tag2.getText().toString().trim();
-                m.tag3 = tag3.getText().toString().trim();
-                m.tag4 = tag4.getText().toString().trim();
+                .setTitle("New Journal Entry")
+                .setView(layout)
+                .setPositiveButton("Submit", (dialogInterface, which) -> {
+                    Message m = new Message();
+                    m.message = message.getText().toString().trim();
+                    m.author = author.getText().toString().trim();
+                    m.tag1 = tag1.getText().toString().trim();
+                    m.tag2 = tag2.getText().toString().trim();
+                    m.tag3 = tag3.getText().toString().trim();
+                    m.tag4 = tag4.getText().toString().trim();
 
-                inputHandler(view, m);
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
+                    if (posCallback != null) posCallback.accept(m);
+                })
+                .setNegativeButton("Cancel", (ignored, ignored2) -> {
+                    if (negCallback != null) negCallback.run();
+                })
+                .show();
+    }
+
+    private void promptUserEnterLog(View view) {
+        if (MainActivity.getNotebook() == null) {
+            Snackbar.make(view, "No journal selected...", Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+
+        promptUserBuildMessageObject(view, (log) -> {inputHandler(view, log);}, null);
+    }
+
+    private boolean promptUserQueryLogs(View view) {
+
+        promptUserBuildMessageObject(view, (query) -> {
+            DjabkoJournal.read(view, query.toJson(), (json) -> {
+                try {
+                    Snackbar.make(view, json.toString(4), Snackbar.LENGTH_INDEFINITE).show();
+                } catch (JSONException e) {
+                    Log.println(Log.ERROR, "JSON", Log.getStackTraceString(e));
+                    Snackbar.make(view, "Error parsing JSON response...", Snackbar.LENGTH_SHORT).show();
+                }
+            }, (json) -> {
+                Log.println(Log.ERROR, "Volley", json.toString());
+                Snackbar.make(view, "HTTP-level error...", Snackbar.LENGTH_SHORT).show();
+            });
+        }, null);
+
+        return true;
     }
 
     private void addLog(Message m) {
@@ -220,7 +249,8 @@ public class MainActivity extends AppCompatActivity {
         injectFragment(R.id.left_drawer, new JournalsFragment());
         loadNotebooksPref();
 
-        binding.fab.setOnClickListener(this::readMessage);
+        binding.fab.setOnClickListener(this::promptUserEnterLog);
+        binding.fab.setOnLongClickListener(this::promptUserQueryLogs);
     }
 
     public static void reloadLogs() {
@@ -312,5 +342,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void closeDrawer() {
         drawerLayout.closeDrawer(GravityCompat.START);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 }

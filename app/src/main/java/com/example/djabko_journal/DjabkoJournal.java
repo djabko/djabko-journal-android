@@ -55,6 +55,7 @@ public class DjabkoJournal {
         initialize(view);
         display(view, "Logging '" + message.message + "'");
 
+        // TODO: JSONObject body = message.toJson();
         JSONObject body = new JSONObject();
 
         try {
@@ -103,23 +104,15 @@ public class DjabkoJournal {
         log(view, new Message(text));
     }
 
-    public static boolean read(View view, JsonSuccessCallback onSuccess, JsonErrorCallback onError) {
+    public static boolean read(View view, JSONObject query, JsonSuccessCallback onSuccess, JsonErrorCallback onError) {
+        if (query == null) return false;
+
         initialize(view);
-
-        JSONObject body = new JSONObject();
-
-        try {
-            body.put("notebook", MainActivity.getNotebook().name);
-        } catch (JSONException e) {
-            display(view, "Error: " + e.toString());
-            Log.println(Log.ERROR, "DjabkoJournal", Log.getStackTraceString(e));
-            return false;
-        }
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST,
                 "https://djabko.com/journal/read",
-                body,
+                query,
                 onSuccess::onSuccess,
                 onError::onError
         );
@@ -127,5 +120,19 @@ public class DjabkoJournal {
         m_queue.add(request);
 
         return true;
+    }
+
+    public static boolean read(View view, JsonSuccessCallback onSuccess, JsonErrorCallback onError) {
+        JSONObject query = new JSONObject();
+
+        try {
+            query.put("notebook", MainActivity.getNotebook().name);
+        } catch (JSONException e) {
+            display(view, "Error: " + e);
+            Log.println(Log.ERROR, "DjabkoJournal", Log.getStackTraceString(e));
+            return false;
+        }
+
+        return read(view, query, onSuccess, onError);
     }
 }

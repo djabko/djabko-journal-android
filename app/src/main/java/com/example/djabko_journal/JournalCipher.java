@@ -46,8 +46,9 @@ public class JournalCipher {
     public JournalCipher(String keyAlias, SecretKey key) throws Exception {
         initCipher();
 
-
         keystore.load(null);
+
+        if (keyAlias == null) throw new Exception("Null keyAlias");
 
         if (key != null);
 
@@ -66,9 +67,9 @@ public class JournalCipher {
             KeyGenerator keygen = KeyGenerator.getInstance("AES", ANDROID_KEYSTORE);
             keygen.init(spec);
             key = keygen.generateKey();
-            alias = keyAlias;
         }
 
+        alias = keyAlias;
         this.key = key;
     }
 
@@ -81,7 +82,7 @@ public class JournalCipher {
         try {
             byte[] key = Base64.decode(base64Key, Base64.NO_WRAP);
             this.key = new SecretKeySpec(key, "AES");
-            keystore.setKeyEntry(alias, key, null);
+            keystore.setEntry(alias, new KeyStore.SecretKeyEntry(this.key), null);
 
         } catch (KeyStoreException e) {
             Log.println(Log.ERROR, this.getClass().toString(), Log.getStackTraceString(e));
