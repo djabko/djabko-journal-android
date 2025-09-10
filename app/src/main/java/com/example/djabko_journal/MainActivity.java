@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         return view;
     }
 
-    private void promptUserBuildMessageObject(View view, Consumer<Message> posCallback, Runnable negCallback) {
+    private void promptUserBuildMessageObject(View view, boolean optional_fields, boolean immutable_fields, Consumer<Message> posCallback, Runnable negCallback) {
         Context context = view.getContext();
 
         int ems = 5;
@@ -108,24 +108,48 @@ public class MainActivity extends AppCompatActivity {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER_HORIZONTAL);
 
-        final EditText message = buildEditTextView(context, layout, "Enter Log", 0, null);
-        final EditText author = buildEditTextView(context, layout, "Author", ems, params);
-        final EditText tag1 = buildEditTextView(context, layout, "Tag 1", ems, params);
-        final EditText tag2 = buildEditTextView(context, layout, "Tag 2", ems, params);
-        final EditText tag3 = buildEditTextView(context, layout, "Tag 3", ems, params);
-        final EditText tag4 = buildEditTextView(context, layout, "Tag 4", ems, params);
+        final EditText message, datetime, author, tag1, tag2, tag3, tag4;
+
+        message = buildEditTextView(context, layout, "Enter Log", 0, null);
+
+        if (immutable_fields)
+            datetime = buildEditTextView(context, layout, "Datetime", ems, params);
+        else
+            datetime = null;
+
+        if (optional_fields) {
+            author = buildEditTextView(context, layout, "Author", ems, params);
+            tag1 = buildEditTextView(context, layout, "Tag 1", ems, params);
+            tag2 = buildEditTextView(context, layout, "Tag 2", ems, params);
+            tag3 = buildEditTextView(context, layout, "Tag 3", ems, params);
+            tag4 = buildEditTextView(context, layout, "Tag 4", ems, params);
+        } else
+            author = tag1 = tag2 = tag3 = tag4 = null;
 
         new MaterialAlertDialogBuilder(context)
                 .setTitle("New Journal Entry")
                 .setView(layout)
                 .setPositiveButton("Submit", (dialogInterface, which) -> {
-                    Message m = new Message();
-                    m.message = message.getText().toString().trim();
-                    m.author = author.getText().toString().trim();
-                    m.tag1 = tag1.getText().toString().trim();
-                    m.tag2 = tag2.getText().toString().trim();
-                    m.tag3 = tag3.getText().toString().trim();
-                    m.tag4 = tag4.getText().toString().trim();
+
+                    String s_datetime, s_message, s_author, s_tag1, s_tag2, s_tag3, s_tag4;
+
+                    if (immutable_fields)
+                        s_datetime = datetime.getText().toString();
+                    else
+                        s_datetime = null;
+
+                    if (optional_fields) {
+                        s_message = message.getText().toString();
+                        s_author = author.getText().toString();
+                        s_tag1 = tag1.getText().toString();
+                        s_tag2 = tag2.getText().toString();
+                        s_tag3 = tag3.getText().toString();
+                        s_tag4 = tag4.getText().toString();
+                    } else
+                        s_message = s_author = s_tag1 = s_tag2 = s_tag3 = s_tag4 = null;
+
+                    Message m = new Message(journalSelected.name, null, null, s_message, s_author, s_tag1, s_tag2, s_tag3, s_tag4);
+                    m.datetime = s_datetime;
 
                     if (posCallback != null) posCallback.accept(m);
                 })
@@ -141,12 +165,12 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        promptUserBuildMessageObject(view, (log) -> {inputHandler(view, log);}, null);
+        promptUserBuildMessageObject(view, true, false, (log) -> {inputHandler(view, log);}, null);
     }
 
     private boolean promptUserQueryLogs(View view) {
 
-        promptUserBuildMessageObject(view, (query) -> {
+        promptUserBuildMessageObject(view, true, true, (query) -> {
             DjabkoJournal.read(view, query.toJson(), (json) -> {
                 try {
                     Snackbar.make(view, json.toString(4), Snackbar.LENGTH_INDEFINITE).show();

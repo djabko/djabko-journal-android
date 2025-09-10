@@ -58,16 +58,17 @@ public class Message {
         this.notebook = notebook;
         this.date = date;
         this.time = time;
-        this.datetime = date + " " + time;
         this.message = message;
         this.author = author;
         this.tag1 = tag1;
         this.tag2 = tag2;
         this.tag3 = tag3;
         this.tag4 = tag4;
+
+        if (date != null && time != null) this.datetime = date + " " + time;
     }
 
-    @NonNull
+        @NonNull
     public String toString() {
         return datetime + "\t" + message;
     }
