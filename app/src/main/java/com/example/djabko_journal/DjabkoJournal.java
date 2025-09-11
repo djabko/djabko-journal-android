@@ -59,14 +59,23 @@ public class DjabkoJournal {
         JSONObject body = new JSONObject();
 
         try {
-            body.put("notebook", MainActivity.getNotebook().name);
-            body.put("message", MainActivity.getNotebook().jcipher.encrypt(message.message));
+            body.put(JournalConstants.NOTEBOOK.raw, MainActivity.getNotebook().name);
+            body.put(JournalConstants.MESSAGE.raw, MainActivity.getNotebook().jcipher.encrypt(message.message));
 
-            if (message.author != null) body.put("author", message.author);
-            if (message.tag1 != null) body.put("tag1", message.tag1);
-            if (message.tag2 != null) body.put("tag2", message.tag2);
-            if (message.tag3 != null) body.put("tag3", message.tag3);
-            if (message.tag4 != null) body.put("tag4", message.tag4);
+            if (message.author != null)
+                body.put(JournalConstants.AUTHOR.raw, message.author);
+
+            if (message.tag1 != null)
+                body.put(JournalConstants.TAG1.raw, message.tag1);
+
+            if (message.tag2 != null)
+                body.put(JournalConstants.TAG2.raw, message.tag2);
+
+            if (message.tag3 != null)
+                body.put(JournalConstants.TAG3.raw, message.tag3);
+
+            if (message.tag4 != null)
+                body.put(JournalConstants.TAG4.raw, message.tag4);
 
         } catch (Exception e) {
             display(view, "Error: " + e);
@@ -126,7 +135,7 @@ public class DjabkoJournal {
         JSONObject query = new JSONObject();
 
         try {
-            query.put("notebook", MainActivity.getNotebook().name);
+            query.put(JournalConstants.NOTEBOOK.raw, MainActivity.getNotebook().name);
         } catch (JSONException e) {
             display(view, "Error: " + e);
             Log.println(Log.ERROR, "DjabkoJournal", Log.getStackTraceString(e));

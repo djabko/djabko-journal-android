@@ -113,16 +113,16 @@ public class MainActivity extends AppCompatActivity {
         message = buildEditTextView(context, layout, "Enter Log", 0, null);
 
         if (immutable_fields)
-            datetime = buildEditTextView(context, layout, "Datetime", ems, params);
+            datetime = buildEditTextView(context, layout, JournalConstants.DATETIME.label, ems, params);
         else
             datetime = null;
 
         if (optional_fields) {
-            author = buildEditTextView(context, layout, "Author", ems, params);
-            tag1 = buildEditTextView(context, layout, "Tag 1", ems, params);
-            tag2 = buildEditTextView(context, layout, "Tag 2", ems, params);
-            tag3 = buildEditTextView(context, layout, "Tag 3", ems, params);
-            tag4 = buildEditTextView(context, layout, "Tag 4", ems, params);
+            author = buildEditTextView(context, layout, JournalConstants.AUTHOR.label, ems, params);
+            tag1 = buildEditTextView(context, layout, JournalConstants.TAG1.label, ems, params);
+            tag2 = buildEditTextView(context, layout, JournalConstants.TAG2.label, ems, params);
+            tag3 = buildEditTextView(context, layout, JournalConstants.TAG3.label, ems, params);
+            tag4 = buildEditTextView(context, layout, JournalConstants.TAG4.label, ems, params);
         } else
             author = tag1 = tag2 = tag3 = tag4 = null;
 

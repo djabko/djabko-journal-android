@@ -30,20 +30,29 @@ public class Message {
     }
 
     public Message (JSONObject json) throws JSONException {
-        String datetime = json.getString("Datetime");
+        String datetime = json.getString(JournalConstants.DATETIME.raw);
         int idx = datetime.indexOf(' ');
 
         this.date = datetime.substring(0, idx);
         this.time = datetime.substring(idx + 1, datetime.indexOf('.'));
         this.datetime = date + " " + time;
-        this.notebook = json.getString("Notebook");
-        this.message = json.getString("Message");
+        this.notebook = json.getString(JournalConstants.NOTEBOOK.raw);
+        this.message = json.getString(JournalConstants.MESSAGE.raw);
 
-        if (json.has("Author")) this.author = json.getString("Author");
-        if (json.has("Tag1")) this.tag1 = json.getString("Tag1");
-        if (json.has("Tag2")) this.tag2 = json.getString("Tag2");
-        if (json.has("Tag3")) this.tag3 = json.getString("Tag3");
-        if (json.has("Tag4")) this.tag4 = json.getString("Tag4");
+        if (json.has( JournalConstants.AUTHOR.raw ))
+            this.author = json.getString( JournalConstants.AUTHOR.raw );
+
+        if (json.has( JournalConstants.TAG1.raw ))
+            this.tag1 = json.getString( JournalConstants.TAG1.raw );
+
+        if (json.has( JournalConstants.TAG2.raw ))
+            this.tag2 = json.getString( JournalConstants.TAG2.raw );
+
+        if (json.has( JournalConstants.TAG3.raw ))
+            this.tag3 = json.getString( JournalConstants.TAG3.raw );
+
+        if (json.has( JournalConstants.TAG4.raw ))
+            this.tag4 = json.getString( JournalConstants.TAG4.raw );
     }
 
     public Message (String notebook, String date, String time, String message) {
@@ -78,17 +87,18 @@ public class Message {
         try {
             JSONObject json = new JSONObject();
 
-            json.put("Notebook", notebook);
-            json.put("Datetime", datetime);
-            json.put("Message", message);
+            json.put( JournalConstants.NOTEBOOK.raw, notebook );
+            json.put( JournalConstants.DATETIME.raw, datetime );
+            json.put( JournalConstants.MESSAGE.raw,  message );
 
-            if (author != null) json.put("Author", author);
-            if (tag1 != null) json.put("Tag1", tag1);
-            if (tag2 != null) json.put("Tag2", tag2);
-            if (tag3 != null) json.put("Tag3", tag3);
-            if (tag4 != null) json.put("Tag4", tag4);
+            if (author != null) json.put(JournalConstants.AUTHOR.raw, author);
+            if (tag1 != null)   json.put(JournalConstants.TAG1.raw, tag1);
+            if (tag2 != null)   json.put(JournalConstants.TAG2.raw, tag2);
+            if (tag3 != null)   json.put(JournalConstants.TAG3.raw, tag3);
+            if (tag4 != null)   json.put(JournalConstants.TAG4.raw, tag4);
 
             return json;
+
         } catch (JSONException e) {
             Log.println(Log.ERROR, "JSON", Log.getStackTraceString(e));
             return null;
